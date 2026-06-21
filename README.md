@@ -31,8 +31,7 @@ Input Analyzer provides a live view of keyboard states, mouse activity, keystrok
 input-analyzer/
 ├── index.html
 ├── app.js
-├── README.md
-└── .gitignore
+└── README.md
 ```
 
 ---

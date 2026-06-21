@@ -21,7 +21,7 @@ Input Analyzer provides a live view of keyboard states, mouse activity, keystrok
 
 ## Screenshot
 
-![Input Analyzer](screenshot.png)
+![image alt](https://github.com/j66789j/input-analyzer/blob/0380c2cea246e6cbf41b98fe4dd6c4c6085d061d/image.png)
 
 ---
 
@@ -42,7 +42,7 @@ input-analyzer/
 Clone the repository:
 
 ```bash
-git clone https://github.com/your-username/input-analyzer.git
+git clone https://github.com/j66789j/input-analyzer.git
 ```
 
 Open `index.html` directly in your browser, or run the project using VS Code Live Server.

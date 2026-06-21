@@ -1,0 +1,939 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Input Analyzer</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:          #07040f;
+      --bg2:         #0d0818;
+      --surface:     #110d1f;
+      --elevated:    #181228;
+      --panel:       #1a1530;
+      --border:      #2e2550;
+      --border-hi:   #4a4080;
+      --text:        #e6e6fa;
+      --muted:       #6b608a;
+      --subtle:      #2e2550;
+      --deep-purple: #2b1e3e;
+      --cosmic:      #4a4e8f;
+      --lavender:    #a490c2;
+      --silver:      #e6e6fa;
+      --accent:      #7c6fcf;
+      --accent-glow: rgba(124,111,207,0.35);
+      --accent-dim:  rgba(74,78,143,0.25);
+      --green:       #7de8c8;
+      --green-dim:   rgba(125,232,200,0.12);
+      --amber:       #f4c56a;
+      --red:         #e87a7a;
+      --pink:        #c97eb8;
+      --radius:      8px;
+      --radius-lg:   14px;
+      --radius-xl:   18px;
+    }
+
+    html { font-size: 14px; }
+
+    body {
+      font-family: 'Space Grotesk', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 20px;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    /* ── Stars background ──────────────────────────────────────────── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        radial-gradient(1px 1px at 10% 15%, rgba(230,230,250,0.5) 0%, transparent 100%),
+        radial-gradient(1px 1px at 25% 40%, rgba(164,144,194,0.4) 0%, transparent 100%),
+        radial-gradient(1.5px 1.5px at 40% 5%, rgba(230,230,250,0.6) 0%, transparent 100%),
+        radial-gradient(1px 1px at 55% 70%, rgba(164,144,194,0.3) 0%, transparent 100%),
+        radial-gradient(1px 1px at 70% 20%, rgba(230,230,250,0.4) 0%, transparent 100%),
+        radial-gradient(1.5px 1.5px at 80% 55%, rgba(124,111,207,0.5) 0%, transparent 100%),
+        radial-gradient(1px 1px at 90% 85%, rgba(230,230,250,0.3) 0%, transparent 100%),
+        radial-gradient(1px 1px at 15% 80%, rgba(164,144,194,0.4) 0%, transparent 100%),
+        radial-gradient(1px 1px at 60% 90%, rgba(230,230,250,0.3) 0%, transparent 100%),
+        radial-gradient(1.5px 1.5px at 35% 60%, rgba(124,111,207,0.4) 0%, transparent 100%),
+        radial-gradient(1px 1px at 48% 35%, rgba(230,230,250,0.5) 0%, transparent 100%),
+        radial-gradient(1px 1px at 75% 42%, rgba(164,144,194,0.35) 0%, transparent 100%),
+        radial-gradient(1px 1px at 92% 12%, rgba(230,230,250,0.45) 0%, transparent 100%),
+        radial-gradient(1px 1px at 5%  50%, rgba(124,111,207,0.3) 0%, transparent 100%),
+        radial-gradient(1.5px 1.5px at 20% 25%, rgba(230,230,250,0.5) 0%, transparent 100%),
+        radial-gradient(1px 1px at 65% 78%, rgba(164,144,194,0.4) 0%, transparent 100%),
+        radial-gradient(1px 1px at 88% 67%, rgba(230,230,250,0.3) 0%, transparent 100%),
+        radial-gradient(1px 1px at 44% 92%, rgba(124,111,207,0.35) 0%, transparent 100%),
+        radial-gradient(1.5px 1.5px at 3%  30%, rgba(230,230,250,0.45) 0%, transparent 100%),
+        radial-gradient(1px 1px at 97% 44%, rgba(164,144,194,0.3) 0%, transparent 100%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Nebula glow blob */
+    body::after {
+      content: '';
+      position: fixed;
+      width: 600px; height: 600px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(74,78,143,0.08) 0%, transparent 70%);
+      top: -100px; right: -100px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .app {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* ── Header ──────────────────────────────────────────────────────── */
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      height: 56px;
+      background: linear-gradient(135deg, rgba(43,30,62,0.9) 0%, rgba(17,13,31,0.95) 100%);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-xl);
+      backdrop-filter: blur(12px);
+      box-shadow: 0 0 0 1px rgba(124,111,207,0.08), 0 8px 32px rgba(0,0,0,0.4);
+    }
+
+    .header-left { display: flex; align-items: center; gap: 14px; }
+
+    .live-orb {
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 35%, rgba(124,111,207,0.9), rgba(43,30,62,0.8));
+      border: 1px solid rgba(124,111,207,0.5);
+      box-shadow: 0 0 12px rgba(124,111,207,0.4), 0 0 24px rgba(74,78,143,0.2);
+      display: flex; align-items: center; justify-content: center;
+      animation: orb-pulse 3s ease-in-out infinite;
+      flex-shrink: 0;
+    }
+
+    .live-orb-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 6px var(--green);
+      animation: dot-blink 1.5s ease-in-out infinite;
+    }
+
+    @keyframes orb-pulse {
+      0%,100% { box-shadow: 0 0 12px rgba(124,111,207,0.4), 0 0 24px rgba(74,78,143,0.2); }
+      50%      { box-shadow: 0 0 18px rgba(124,111,207,0.6), 0 0 36px rgba(74,78,143,0.3); }
+    }
+    @keyframes dot-blink {
+      0%,100% { opacity:1 } 50% { opacity:.3 }
+    }
+
+    .header-title-group {}
+    .header-title {
+      font-size: .95rem; font-weight: 700; letter-spacing: .04em;
+      background: linear-gradient(90deg, var(--silver) 0%, var(--lavender) 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .header-sub {
+      font-size: .62rem; color: var(--muted); letter-spacing: .12em;
+      text-transform: uppercase; margin-top: 1px;
+      font-family: 'Space Mono', monospace;
+    }
+
+    .header-right { display: flex; align-items: center; gap: 10px; }
+    .header-badge {
+      font-size: .62rem;
+      font-family: 'Space Mono', monospace;
+      color: var(--muted);
+      padding: 4px 12px;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      background: rgba(43,30,62,0.4);
+      letter-spacing: .04em;
+    }
+    .header-badge::before {
+      content: '🔒 ';
+    }
+
+    /* ── Stat strip ──────────────────────────────────────────────────── */
+    .stat-strip {
+      display: grid;
+      grid-template-columns: repeat(4,1fr) auto;
+      gap: 0;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-xl);
+      overflow: hidden;
+      background: var(--border);
+      box-shadow: 0 4px 24px rgba(0,0,0,0.3), inset 0 1px 0 rgba(164,144,194,0.05);
+    }
+
+    .stat-cell {
+      background: var(--surface);
+      padding: 18px 22px 16px;
+      display: flex; flex-direction: column; gap: 6px;
+      position: relative;
+      overflow: hidden;
+    }
+    .stat-cell::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--border-hi), transparent);
+      opacity: 0.6;
+    }
+    .stat-cell:first-child::before { background: linear-gradient(90deg, transparent, var(--green), transparent); opacity: 0.4; }
+    .stat-cell:nth-child(2)::before { background: linear-gradient(90deg, transparent, var(--accent), transparent); opacity: 0.4; }
+    .stat-cell:nth-child(3)::before { background: linear-gradient(90deg, transparent, var(--lavender), transparent); opacity: 0.4; }
+    .stat-cell:nth-child(4)::before { background: linear-gradient(90deg, transparent, var(--amber), transparent); opacity: 0.4; }
+
+    .stat-label {
+      font-size: .6rem; font-weight: 600;
+      letter-spacing: .14em; text-transform: uppercase;
+      color: var(--muted);
+      font-family: 'Space Mono', monospace;
+    }
+    .stat-value {
+      font-size: 2rem; font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      line-height: 1;
+      color: var(--text);
+      font-family: 'Space Grotesk', sans-serif;
+    }
+    .stat-value.green  { color: var(--green);   text-shadow: 0 0 20px rgba(125,232,200,0.3); }
+    .stat-value.accent { color: var(--accent);  text-shadow: 0 0 20px rgba(124,111,207,0.3); }
+    .stat-value.amber  { color: var(--amber);   font-size: 1.3rem; line-height: 1.5; }
+
+    .stat-controls {
+      background: var(--surface);
+      padding: 12px 18px;
+      display: flex; align-items: center; justify-content: center;
+    }
+
+    .btn-reset {
+      font: 600 .65rem/1 'Space Mono', monospace;
+      letter-spacing: .1em; text-transform: uppercase;
+      padding: 9px 16px;
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--muted);
+      cursor: pointer;
+      transition: all .2s;
+      white-space: nowrap;
+      position: relative;
+      overflow: hidden;
+    }
+    .btn-reset::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: linear-gradient(135deg, rgba(232,122,122,0.1), rgba(200,80,80,0.1));
+      opacity: 0; transition: opacity .2s;
+    }
+    .btn-reset:hover {
+      border-color: var(--red);
+      color: var(--red);
+      box-shadow: 0 0 12px rgba(232,122,122,0.2);
+    }
+    .btn-reset:hover::before { opacity: 1; }
+
+    /* ── Panel base ──────────────────────────────────────────────────── */
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-xl);
+      padding: 16px 18px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.2);
+    }
+    .panel-label {
+      font-size: .6rem; font-weight: 600;
+      letter-spacing: .14em; text-transform: uppercase;
+      color: var(--muted); margin-bottom: 12px;
+      font-family: 'Space Mono', monospace;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .panel-label::before {
+      content: '';
+      display: inline-block;
+      width: 3px; height: 10px;
+      background: linear-gradient(180deg, var(--accent), var(--lavender));
+      border-radius: 2px;
+    }
+
+    /* ── History flow ────────────────────────────────────────────────── */
+    .history-flow {
+      display: flex; align-items: center;
+      flex-direction: row;
+      gap: 6px;
+      overflow-x: auto; overflow-y: hidden;
+      height: 40px;
+      white-space: nowrap;
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 0 12px;
+      scrollbar-width: thin; scrollbar-color: var(--border) transparent;
+    }
+    .history-placeholder {
+      font-size: .8rem; color: var(--muted);
+      font-style: italic;
+      font-family: 'Space Mono', monospace;
+    }
+    .key-badge {
+      display: inline-flex; align-items: center; justify-content: center;
+      min-width: 32px; height: 26px; padding: 0 9px;
+      background: linear-gradient(135deg, var(--elevated), var(--deep-purple));
+      border: 1px solid var(--border-hi);
+      border-radius: 6px;
+      font-size: .72rem; font-weight: 600; color: var(--silver);
+      flex-shrink: 0;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3), 0 0 0 1px rgba(164,144,194,0.1);
+      animation: badgeIn .12s cubic-bezier(0.34,1.56,0.64,1);
+    }
+    @keyframes badgeIn {
+      from { opacity:0; transform: translateY(-6px) scale(0.85); }
+      to   { opacity:1; transform: none; }
+    }
+
+    /* ── Mouse buttons ───────────────────────────────────────────────── */
+    .mouse-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; }
+    .mouse-btn {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 14px 10px;
+      text-align: center;
+      user-select: none;
+      transition: all .15s;
+      position: relative;
+      overflow: hidden;
+    }
+    .mouse-btn::after {
+      content: '';
+      position: absolute; inset: 0;
+      background: radial-gradient(circle at 50% 0%, rgba(124,111,207,0.15), transparent 70%);
+      opacity: 0; transition: opacity .15s;
+    }
+    .mouse-btn-icon {
+      font-size: 1.1rem; margin-bottom: 4px;
+      display: block; line-height: 1;
+    }
+    .mouse-btn-label {
+      font-size: .58rem; font-weight: 600;
+      letter-spacing: .1em; text-transform: uppercase;
+      color: var(--muted); margin-bottom: 5px;
+      font-family: 'Space Mono', monospace;
+    }
+    .mouse-btn-count {
+      font-size: 1.4rem; font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      color: var(--text);
+    }
+    .mouse-btn.active {
+      background: linear-gradient(135deg, rgba(74,78,143,0.3), rgba(43,30,62,0.6));
+      border-color: var(--accent);
+      box-shadow: 0 0 0 1px var(--accent), 0 0 20px var(--accent-glow);
+    }
+    .mouse-btn.active::after { opacity: 1; }
+    .mouse-btn.active .mouse-btn-label { color: var(--lavender); }
+    .mouse-btn.active .mouse-btn-count { color: var(--accent); text-shadow: 0 0 12px rgba(124,111,207,0.5); }
+
+    /* ── Keyboard ────────────────────────────────────────────────────── */
+    .kb-scroll {
+      overflow-x: auto; padding-bottom: 6px;
+      scrollbar-width: thin; scrollbar-color: var(--border) transparent;
+    }
+    #keyboard-container { min-width: 1070px; }
+    .kb-row { display: grid; gap: 4px; margin-bottom: 4px; }
+
+    .key {
+      position: relative;
+      height: 46px;
+      background: var(--elevated);
+      border: 1px solid var(--border);
+      border-bottom: 3px solid rgba(0,0,0,0.5);
+      border-radius: 5px;
+      padding: 5px 6px 4px;
+      display: flex; flex-direction: column; justify-content: space-between;
+      user-select: none;
+      transition: background .07s, border-color .07s, box-shadow .07s, transform .06s;
+      cursor: default;
+      box-shadow: inset 0 1px 0 rgba(164,144,194,0.06);
+    }
+    .key:hover {
+      border-color: var(--border-hi);
+      border-bottom-color: rgba(74,64,128,0.7);
+      background: var(--panel);
+    }
+    .key-label {
+      font-size: .62rem; font-weight: 500;
+      color: var(--muted); line-height: 1.2;
+      font-family: 'Space Grotesk', sans-serif;
+    }
+    .key-count {
+      align-self: flex-end;
+      font-size: .55rem; font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      color: transparent;
+      min-width: 12px; text-align: right;
+      font-family: 'Space Mono', monospace;
+      transition: color .15s;
+      line-height: 1;
+    }
+    .key-count.has-count { color: var(--green); text-shadow: 0 0 6px rgba(125,232,200,0.5); }
+
+    .key.active {
+      background: rgba(74,78,143,0.45);
+      border-color: var(--accent);
+      border-bottom-color: var(--accent);
+      border-bottom-width: 1px;
+      box-shadow:
+        0 0 0 1px var(--accent),
+        0 0 14px var(--accent-glow),
+        inset 0 1px 0 rgba(164,144,194,0.15);
+      transform: translateY(2px);
+    }
+    .key.active .key-label { color: var(--lavender); }
+    .key.active .key-count { color: var(--accent); }
+
+    /* ── Log table ───────────────────────────────────────────────────── */
+    .log-header {
+      display: grid;
+      grid-template-columns: 90px 100px 1fr 70px 90px;
+      gap: 8px; padding: 10px 14px;
+      background: var(--elevated);
+      border-bottom: 1px solid var(--border);
+      font-size: .58rem; font-weight: 600;
+      letter-spacing: .12em; text-transform: uppercase;
+      color: var(--muted);
+      font-family: 'Space Mono', monospace;
+    }
+    .log-body {
+      height: 230px; overflow-y: auto;
+      scrollbar-width: thin; scrollbar-color: var(--border) transparent;
+    }
+    .log-row {
+      display: grid;
+      grid-template-columns: 90px 100px 1fr 70px 90px;
+      gap: 8px; padding: 8px 14px;
+      border-bottom: 1px solid rgba(46,37,80,.5);
+      font-size: .72rem;
+      font-variant-numeric: tabular-nums;
+      transition: background .1s;
+      align-items: center;
+    }
+    .log-row:hover { background: var(--elevated); }
+    .log-empty {
+      padding: 30px; text-align: center;
+      font-size: .78rem; color: var(--muted);
+      font-style: italic; font-family: 'Space Mono', monospace;
+    }
+
+    .tag {
+      display: inline-block; padding: 2px 8px; border-radius: 4px;
+      font-size: .6rem; font-weight: 700;
+      letter-spacing: .06em;
+      font-family: 'Space Mono', monospace;
+    }
+    .tag-down  { background: rgba(125,232,200,.12); color: var(--green); }
+    .tag-up    { background: rgba(244,197,106,.1);  color: var(--amber); }
+    .tag-mouse { background: rgba(124,111,207,.15); color: var(--lavender); }
+    .tag-ok    { background: rgba(125,232,200,.08); color: #6ee4ba; font-size: .56rem; }
+    .tag-rel   { background: rgba(244,197,106,.08); color: #f5d588; font-size: .56rem; }
+
+    .code-chip {
+      font-size: .66rem; color: var(--lavender);
+      font-family: 'Space Mono', monospace;
+    }
+    .key-display {
+      display: inline-flex; align-items: center; justify-content: center;
+      min-width: 24px; padding: 2px 5px;
+      background: var(--elevated);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      font-size: .66rem; color: var(--text);
+      font-family: 'Space Grotesk', sans-serif;
+    }
+
+    /* ── Time col ─ */
+    .time-col {
+      font-family: 'Space Mono', monospace;
+      font-size: .64rem;
+      color: var(--muted);
+    }
+
+    /* ── Mid row (history + mouse) ───────────────────────────────────── */
+    .mid-row {
+      display: grid;
+      grid-template-columns: 1fr 280px;
+      gap: 14px;
+      align-items: start;
+    }
+
+    /* ── Footer ──────────────────────────────────────────────────────── */
+    .footer {
+      text-align: center;
+      font-size: .62rem; color: var(--muted);
+      padding: 8px;
+      letter-spacing: .06em;
+      font-family: 'Space Mono', monospace;
+    }
+    .footer span { color: var(--border-hi); margin: 0 6px; }
+
+    /* ── Scrollbars ──────────────────────────────────────────────────── */
+    ::-webkit-scrollbar { width: 4px; height: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--border-hi); }
+
+    /* ── Responsive ──────────────────────────────────────────────────── */
+    @media (max-width: 760px) {
+      .stat-strip { grid-template-columns: repeat(2,1fr); }
+      .stat-controls { grid-column: 1/-1; }
+      .mid-row { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+<div class="app">
+
+  <!-- Header -->
+  <header class="header">
+    <div class="header-left">
+      <div class="live-orb"><div class="live-orb-dot"></div></div>
+      <div class="header-title-group">
+        <div class="header-title">Input Analyzer</div>
+        <div class="header-sub">Keyboard · Mouse · Telemetry</div>
+      </div>
+    </div>
+    <div class="header-right">
+      <span class="header-badge">Local-only · No data sent</span>
+    </div>
+  </header>
+
+  <!-- Stat strip -->
+  <div class="stat-strip">
+    <div class="stat-cell">
+      <span class="stat-label">APM</span>
+      <span id="stat-apm" class="stat-value green">0</span>
+    </div>
+    <div class="stat-cell">
+      <span class="stat-label">CPS</span>
+      <span id="stat-cps" class="stat-value accent">0</span>
+    </div>
+    <div class="stat-cell">
+      <span class="stat-label">Total Keys</span>
+      <span id="stat-total-keys" class="stat-value">0</span>
+    </div>
+    <div class="stat-cell">
+      <span class="stat-label">Last Input</span>
+      <span id="stat-last-input" class="stat-value amber">—</span>
+    </div>
+    <div class="stat-controls">
+      <button id="btn-reset" class="btn-reset">⟳ Reset</button>
+    </div>
+  </div>
+
+  <!-- History + Mouse -->
+  <div class="mid-row">
+    <div class="panel" style="min-width:0;overflow:hidden">
+      <div class="panel-label">Keystroke History</div>
+      <div id="history-flow" class="history-flow">
+        <span class="history-placeholder">Start typing…</span>
+      </div>
+    </div>
+    <div class="mouse-grid">
+      <div id="mouse-left" class="mouse-btn">
+        <span class="mouse-btn-icon">◱</span>
+        <div class="mouse-btn-label">Left</div>
+        <div id="count-m-left" class="mouse-btn-count">0</div>
+      </div>
+      <div id="mouse-middle" class="mouse-btn">
+        <span class="mouse-btn-icon">⊕</span>
+        <div class="mouse-btn-label">Middle</div>
+        <div id="count-m-middle" class="mouse-btn-count">0</div>
+      </div>
+      <div id="mouse-right" class="mouse-btn">
+        <span class="mouse-btn-icon">◲</span>
+        <div class="mouse-btn-label">Right</div>
+        <div id="count-m-right" class="mouse-btn-count">0</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Keyboard -->
+  <div class="panel" style="padding:16px 14px">
+    <div class="panel-label">Full-size Keyboard</div>
+    <div class="kb-scroll">
+      <div id="keyboard-container"></div>
+    </div>
+  </div>
+
+  <!-- Telemetry log -->
+  <div class="panel" style="padding:0;overflow:hidden">
+    <div style="padding:16px 18px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px">
+      <div class="panel-label" style="margin-bottom:0">Event Telemetry</div>
+    </div>
+    <div class="log-header">
+      <div>Time</div><div>Event</div><div>Code</div><div>Key</div><div>Status</div>
+    </div>
+    <div id="log-body" class="log-body">
+      <div class="log-empty">— Waiting for input —</div>
+    </div>
+  </div>
+
+  <div class="footer">
+    Input Analyzer
+    <span>·</span>
+    Browser-side keyboard &amp; mouse event monitor
+    <span>·</span>
+    No data leaves your device
+  </div>
+</div>
+
+<script>
+// ─── Keyboard layout data ─────────────────────────────────────────────────────
+const KB_SECTIONS = [
+  {
+    name: "function",
+    cols: "56px repeat(4,46px) 14px repeat(4,46px) 14px repeat(4,46px) 14px repeat(3,46px)",
+    rows: [[
+      { code:"Escape",      label:"Esc" },
+      { code:"F1",  label:"F1"  }, { code:"F2",  label:"F2"  },
+      { code:"F3",  label:"F3"  }, { code:"F4",  label:"F4"  },
+      { spacer:true },
+      { code:"F5",  label:"F5"  }, { code:"F6",  label:"F6"  },
+      { code:"F7",  label:"F7"  }, { code:"F8",  label:"F8"  },
+      { spacer:true },
+      { code:"F9",  label:"F9"  }, { code:"F10", label:"F10" },
+      { code:"F11", label:"F11" }, { code:"F12", label:"F12" },
+      { spacer:true },
+      { code:"PrintScreen", label:"PrtSc" },
+      { code:"ScrollLock",  label:"ScrLk" },
+      { code:"Pause",       label:"Pause" }
+    ]]
+  },
+  {
+    name: "main",
+    cols: "repeat(14,46px) 72px 14px repeat(3,46px) 14px repeat(4,46px)",
+    rows: [
+      [
+        { code:"Backquote", label:"` ~" },
+        { code:"Digit1", label:"1 !" }, { code:"Digit2", label:"2 @" },
+        { code:"Digit3", label:"3 #" }, { code:"Digit4", label:"4 $" },
+        { code:"Digit5", label:"5 %" }, { code:"Digit6", label:"6 ^" },
+        { code:"Digit7", label:"7 &" }, { code:"Digit8", label:"8 *" },
+        { code:"Digit9", label:"9 (" }, { code:"Digit0", label:"0 )" },
+        { code:"Minus",  label:"- _" }, { code:"Equal",  label:"= +" },
+        { code:"Backspace", label:"Backspace", colSpan:2 },
+        { spacer:true },
+        { code:"Insert",  label:"Ins"  }, { code:"Home", label:"Home" },
+        { code:"PageUp",  label:"PgUp" },
+        { spacer:true },
+        { code:"NumLock",        label:"Num" },
+        { code:"NumpadDivide",   label:"/"   },
+        { code:"NumpadMultiply", label:"×"   },
+        { code:"NumpadSubtract", label:"−"   }
+      ],
+      [
+        { code:"Tab", label:"Tab", colSpan:2 },
+        { code:"KeyQ", label:"Q" }, { code:"KeyW", label:"W" },
+        { code:"KeyE", label:"E" }, { code:"KeyR", label:"R" },
+        { code:"KeyT", label:"T" }, { code:"KeyY", label:"Y" },
+        { code:"KeyU", label:"U" }, { code:"KeyI", label:"I" },
+        { code:"KeyO", label:"O" }, { code:"KeyP", label:"P" },
+        { code:"BracketLeft",  label:"[ {" },
+        { code:"BracketRight", label:"] }" },
+        { code:"Backslash",    label:"\\ |" },
+        { spacer:true },
+        { code:"Delete",   label:"Del"  }, { code:"End",      label:"End"  },
+        { code:"PageDown", label:"PgDn" },
+        { spacer:true },
+        { code:"Numpad7", label:"7" }, { code:"Numpad8", label:"8" },
+        { code:"Numpad9", label:"9" },
+        { code:"NumpadAdd", label:"+", rowSpan:2 }
+      ],
+      [
+        { code:"CapsLock", label:"Caps", colSpan:2 },
+        { code:"KeyA", label:"A" }, { code:"KeyS", label:"S" },
+        { code:"KeyD", label:"D" }, { code:"KeyF", label:"F" },
+        { code:"KeyG", label:"G" }, { code:"KeyH", label:"H" },
+        { code:"KeyJ", label:"J" }, { code:"KeyK", label:"K" },
+        { code:"KeyL", label:"L" },
+        { code:"Semicolon", label:"; :" }, { code:"Quote", label:"' \"" },
+        { code:"Enter", label:"Enter", colSpan:2 },
+        { spacer:true, colSpan:5 },
+        { code:"Numpad4", label:"4" }, { code:"Numpad5", label:"5" },
+        { code:"Numpad6", label:"6" }
+      ],
+      [
+        { code:"ShiftLeft", label:"Shift", colSpan:3 },
+        { code:"KeyZ", label:"Z" }, { code:"KeyX", label:"X" },
+        { code:"KeyC", label:"C" }, { code:"KeyV", label:"V" },
+        { code:"KeyB", label:"B" }, { code:"KeyN", label:"N" },
+        { code:"KeyM", label:"M" },
+        { code:"Comma",  label:", <" }, { code:"Period", label:". >" },
+        { code:"Slash",  label:"/ ?" },
+        { code:"ShiftRight", label:"Shift", colSpan:2 },
+        { spacer:true, colSpan:2 },
+        { code:"ArrowUp", label:"↑" },
+        { spacer:true, colSpan:2 },
+        { code:"Numpad1", label:"1" }, { code:"Numpad2", label:"2" },
+        { code:"Numpad3", label:"3" },
+        { code:"NumpadEnter", label:"↵", rowSpan:2 }
+      ],
+      [
+        { code:"ControlLeft",  label:"Ctrl" },
+        { code:"MetaLeft",     label:"Win"  },
+        { code:"AltLeft",      label:"Alt"  },
+        { code:"Space",        label:"Space", colSpan:6 },
+        { code:"AltRight",     label:"Alt"  },
+        { code:"MetaRight",    label:"Win"  },
+        { code:"ContextMenu",  label:"Menu" },
+        { code:"ControlRight", label:"Ctrl" },
+        { spacer:true, colSpan:3 },
+        { code:"ArrowLeft",  label:"←" },
+        { code:"ArrowDown",  label:"↓" },
+        { code:"ArrowRight", label:"→" },
+        { spacer:true },
+        { code:"Numpad0",       label:"0", colSpan:2 },
+        { code:"NumpadDecimal", label:"." }
+      ]
+    ]
+  }
+];
+
+// ─── State ────────────────────────────────────────────────────────────────────
+const keyPressCounts = {};
+const keysDown       = new Set();
+let mouseCounts      = { left:0, middle:0, right:0 };
+let totalKeyCount    = 0;
+let actionsInWindow  = 0;
+let clicksInSecond   = 0;
+let isLogEmpty       = true;
+const MAX_HISTORY    = 50;
+const MAX_LOG_ROWS   = 200;
+
+// ─── DOM refs ─────────────────────────────────────────────────────────────────
+const $ = id => document.getElementById(id);
+const kbContainer   = $("keyboard-container");
+const historyFlow   = $("history-flow");
+const logBody       = $("log-body");
+const statApm       = $("stat-apm");
+const statCps       = $("stat-cps");
+const statTotalKeys = $("stat-total-keys");
+const statLastInput = $("stat-last-input");
+
+// ─── Keyboard rendering ───────────────────────────────────────────────────────
+function buildKeyboard() {
+  kbContainer.innerHTML = "";
+  KB_SECTIONS.forEach(section => {
+    section.rows.forEach(row => {
+      const rowEl = document.createElement("div");
+      rowEl.className = "kb-row";
+      rowEl.style.gridTemplateColumns = section.cols;
+      row.forEach(k => rowEl.appendChild(buildKey(k)));
+      kbContainer.appendChild(rowEl);
+    });
+  });
+}
+
+function buildKey(k) {
+  if (k.spacer) {
+    const s = document.createElement("div");
+    s.style.gridColumn = `span ${k.colSpan||1}`;
+    s.style.gridRow    = `span ${k.rowSpan||1}`;
+    return s;
+  }
+  const el = document.createElement("div");
+  el.id        = `key-${k.code}`;
+  el.className = "key";
+  el.style.gridColumn = `span ${k.colSpan||1}`;
+  el.style.gridRow    = `span ${k.rowSpan||1}`;
+
+  const lbl = document.createElement("span");
+  lbl.className   = "key-label";
+  lbl.textContent = k.label;
+
+  const cnt = document.createElement("span");
+  cnt.className   = "key-count";
+  cnt.textContent = "";
+
+  el.append(lbl, cnt);
+  return el;
+}
+
+function refreshKeyCounter(code) {
+  const el = document.getElementById(`key-${code}`);
+  if (!el) return;
+  const n   = keyPressCounts[code] || 0;
+  const cnt = el.querySelector(".key-count");
+  if (cnt) {
+    cnt.textContent = n || "";
+    cnt.classList.toggle("has-count", n > 0);
+  }
+}
+
+// ─── Display helper ───────────────────────────────────────────────────────────
+function displayKey(event) {
+  if (event.code?.startsWith("Numpad")) return event.code.replace("Numpad","Num ");
+  if (event.key === " ")    return "Space";
+  if (event.key && event.key !== "Unidentified") return event.key;
+  return event.code || "?";
+}
+
+// ─── History ──────────────────────────────────────────────────────────────────
+function addToHistory(label) {
+  const placeholder = historyFlow.querySelector(".history-placeholder");
+  if (placeholder) placeholder.remove();
+
+  const badge = document.createElement("span");
+  badge.className   = "key-badge";
+  badge.textContent = label;
+  historyFlow.insertBefore(badge, historyFlow.firstChild);
+
+  while (historyFlow.children.length > MAX_HISTORY) {
+    historyFlow.removeChild(historyFlow.lastChild);
+  }
+}
+
+// ─── Log ──────────────────────────────────────────────────────────────────────
+function addLog(type, code, key, status) {
+  if (isLogEmpty) { logBody.innerHTML = ""; isLogEmpty = false; }
+
+  const isDown  = type === "KEYDOWN";
+  const isMouse = type.startsWith("MOUSE");
+  const tagCls  = isDown ? "tag-down" : isMouse ? "tag-mouse" : "tag-up";
+  const staCls  = status === "CAPTURED" ? "tag-ok" : "tag-rel";
+
+  const row = document.createElement("div");
+  row.className = "log-row";
+  row.innerHTML = `
+    <div class="time-col">${new Date().toLocaleTimeString()}</div>
+    <div><span class="tag ${tagCls}">${type}</span></div>
+    <div class="code-chip">${code||"—"}</div>
+    <div><span class="key-display">${key||"—"}</span></div>
+    <div><span class="tag ${staCls}">${status}</span></div>
+  `;
+  logBody.insertBefore(row, logBody.firstChild);
+  while (logBody.children.length > MAX_LOG_ROWS) logBody.removeChild(logBody.lastChild);
+}
+
+// ─── Reset ────────────────────────────────────────────────────────────────────
+function reset() {
+  Object.keys(keyPressCounts).forEach(k => { keyPressCounts[k] = 0; });
+  keysDown.clear();
+  mouseCounts     = { left:0, middle:0, right:0 };
+  totalKeyCount   = 0;
+  actionsInWindow = 0;
+  clicksInSecond  = 0;
+  isLogEmpty      = true;
+
+  statApm.textContent       = "0";
+  statCps.textContent       = "0";
+  statTotalKeys.textContent = "0";
+  statLastInput.textContent = "—";
+  $("count-m-left").textContent   = "0";
+  $("count-m-middle").textContent = "0";
+  $("count-m-right").textContent  = "0";
+
+  historyFlow.innerHTML = '<span class="history-placeholder">Start typing…</span>';
+  logBody.innerHTML     = '<div class="log-empty">— Waiting for input —</div>';
+
+  buildKeyboard();
+}
+
+// ─── Prevent default on these keys ───────────────────────────────────────────
+const PREVENT_DEFAULT = new Set([
+  "Space","ArrowUp","ArrowDown","ArrowLeft","ArrowRight","Tab","Backspace","F5"
+]);
+
+// ─── Keyboard events ──────────────────────────────────────────────────────────
+window.addEventListener("keydown", e => {
+  if (PREVENT_DEFAULT.has(e.code)) e.preventDefault();
+  const dk = displayKey(e);
+  statLastInput.textContent = dk;
+  if (!keysDown.has(e.code)) {
+    keysDown.add(e.code);
+    keyPressCounts[e.code] = (keyPressCounts[e.code] || 0) + 1;
+    totalKeyCount++;
+    actionsInWindow++;
+    statTotalKeys.textContent = totalKeyCount;
+    addToHistory(dk);
+    refreshKeyCounter(e.code);
+  }
+  const el = document.getElementById(`key-${e.code}`);
+  if (el) el.classList.add("active");
+  addLog("KEYDOWN", e.code, dk, "CAPTURED");
+});
+
+window.addEventListener("keyup", e => {
+  if (PREVENT_DEFAULT.has(e.code)) e.preventDefault();
+  keysDown.delete(e.code);
+  const el = document.getElementById(`key-${e.code}`);
+  if (el) el.classList.remove("active");
+  addLog("KEYUP", e.code, displayKey(e), "RELEASED");
+});
+
+// ─── Mouse events ─────────────────────────────────────────────────────────────
+const MOUSE_MAP = {
+  0: { key:"left",   el:"mouse-left",   countEl:"count-m-left",   label:"LMB" },
+  1: { key:"middle", el:"mouse-middle", countEl:"count-m-middle", label:"MMB" },
+  2: { key:"right",  el:"mouse-right",  countEl:"count-m-right",  label:"RMB" }
+};
+
+window.addEventListener("contextmenu", e => e.preventDefault());
+
+window.addEventListener("mousedown", e => {
+  actionsInWindow++; clicksInSecond++;
+  const m = MOUSE_MAP[e.button];
+  if (!m) return;
+  mouseCounts[m.key]++;
+  $(m.countEl).textContent = mouseCounts[m.key];
+  $(m.el).classList.add("active");
+  addLog("MOUSEDOWN", `Mouse${m.key.charAt(0).toUpperCase()+m.key.slice(1)}`, m.label, "CAPTURED");
+});
+
+window.addEventListener("mouseup", e => {
+  const m = MOUSE_MAP[e.button];
+  if (m) $(m.el).classList.remove("active");
+});
+
+// ─── Reset button ─────────────────────────────────────────────────────────────
+$("btn-reset").addEventListener("click", reset);
+
+// ─── APM ──────────────────────────────────────────────────────────────────────
+setInterval(() => {
+  statApm.textContent = actionsInWindow * 12;
+  actionsInWindow = 0;
+}, 5000);
+
+// ─── CPS ──────────────────────────────────────────────────────────────────────
+setInterval(() => {
+  statCps.textContent = clicksInSecond;
+  clicksInSecond = 0;
+}, 1000);
+
+// ─── Init ─────────────────────────────────────────────────────────────────────
+buildKeyboard();
+</script>
+</body>
+</html>

@@ -21,7 +21,7 @@ Input Analyzer provides a live view of keyboard states, mouse activity, keystrok
 
 ## Screenshot
 
-![image alt](https://github.com/j66789j/input-analyzer/blob/eced3b8f13774f914e6aff2531e85089c7f8bd78/Screenshot%202026-06-21%20144446.png)
+![image alt](https://github.com/j66789j/Keyboard-Tester/blob/9dddd0a77119359d872b0aeee63d32d3fc4b676e/website-screen.png)
 
 ---
 
